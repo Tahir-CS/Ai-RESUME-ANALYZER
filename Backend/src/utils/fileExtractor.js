@@ -1,11 +1,8 @@
-// import pdf from 'pdf-parse';
+import pdf from 'pdf-parse';
 import mammoth from 'mammoth';
 import fs from 'fs/promises';
 
 export const extractTextFromPDF = async (filePath) => {
-  // PDF extraction disabled for now
-  return '';
-  /*
   try {
     const dataBuffer = await fs.readFile(filePath);
     const data = await pdf(dataBuffer);
@@ -14,7 +11,6 @@ export const extractTextFromPDF = async (filePath) => {
     console.error('Error extracting text from PDF:', error);
     throw new Error('Failed to extract text from PDF');
   }
-  */
 };
 
 export const extractTextFromDOCX = async (filePath) => {
