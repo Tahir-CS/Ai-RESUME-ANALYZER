@@ -4,6 +4,9 @@ import Header from '../components/Header';
 import ResumeUploader from '../components/ResumeUploader';
 import AnalysisDisplay from '../components/AnalysisDisplay';
 
+// API Configuration
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
 const mockAnalysis = {
   score: 88,
   summary: "Your resume demonstrates strong professional experience with quantifiable achievements, but could benefit from some structural improvements and ATS optimization.",
@@ -63,7 +66,7 @@ const Index = () => {
       const formData = new FormData();
       formData.append('resume', file);
 
-      const response = await fetch('http://localhost:3001/api/upload-resume', {
+      const response = await fetch(`${API_BASE_URL}/upload-resume`, {
         method: 'POST',
         body: formData,
       });
@@ -102,7 +105,7 @@ const Index = () => {
       return;
     }
     try {
-      const response = await fetch(`http://localhost:3001/api/feedback/${feedbackId}/download`, {
+      const response = await fetch(`${API_BASE_URL}/feedback/${feedbackId}/download`, {
         method: 'GET',
       });
       if (!response.ok) throw new Error('Failed to generate PDF');
