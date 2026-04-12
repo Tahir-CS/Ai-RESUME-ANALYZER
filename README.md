@@ -72,23 +72,15 @@ To use the AI analysis feature, you need a Google Gemini API key. Follow these s
 5. Click **Create Credentials** and select **API Key**.
 6. Copy the generated API key and paste it into your `.env` file.
 
-## Deployment
-### Frontend Deployment
-To deploy the frontend:
-1. Open [Lovable](https://lovable.dev/projects/095e0220-a087-4e87-85d8-5f2251d18899).
-2. Click on **Share -> Publish**.
+
 
 ### Backend Deployment
 To deploy the backend:
 1. Use a platform like Heroku, Render, or AWS.
 2. Ensure the backend is accessible to the frontend by updating the API URL in the frontend configuration.
 
-## Connecting a Custom Domain
-You can connect a custom domain to the frontend by:
-1. Navigating to **Project > Settings > Domains** in Lovable.
-2. Clicking **Connect Domain**.
 
-For more details, refer to [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide).
+.
 
 ## Contributing
 Contributions are welcome! To contribute:
@@ -102,4 +94,4 @@ Contributions are welcome! To contribute:
 This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Contact
-For questions or support, please contact [Tahir](mailto:tahir@example.com).
+For questions or support, please contact [Tahir](mailto:mtahirbutt1005@gmail.com).
