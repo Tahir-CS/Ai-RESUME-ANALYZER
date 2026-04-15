@@ -1,20 +1,33 @@
-import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 dotenv.config();
 
 async function main() {
-  const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    console.error("Missing GEMINI_API_KEY in environment.");
+    process.exit(1);
+  }
 
   try {
-    const models = await genAI.models.list();
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} while listing models`);
+    }
+
+    const payload = await response.json();
+    const models = Array.isArray(payload?.models) ? payload.models : [];
 
     console.log("Raw response:");
-    console.dir(models, { depth: null }); // show everything
+    console.dir(payload, { depth: null }); // show everything
 
     // Try to access the model list safely
-    if (Array.isArray(models?.models)) {
+    if (models.length > 0) {
       console.log("\nAvailable models:");
-      models.models.forEach((model) => {
+      models.forEach((model) => {
         console.log("–", model.name);
       });
     } else {
