@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { extractTextFromPDF, extractTextFromDOCX } from '../utils/fileExtractor.js';
 import { buildAnalysisPrompt } from '../utils/promptBuilder.js';
 import { generatePDFFeedback } from '../utils/pdfGenerator.js';
+import { parseGeminiAnalysisResponse } from '../utils/geminiResponseParser.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -46,7 +47,18 @@ export const analyzeResume = async (req, res) => {
     const prompt = buildAnalysisPrompt(resumeText, jobDescription);
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const analysis = JSON.parse(response.text());
+    const rawResponseText = response.text();
+
+    let analysis;
+    try {
+      analysis = parseGeminiAnalysisResponse(rawResponseText);
+    } catch (parseError) {
+      console.error('Error parsing Gemini response:', parseError);
+      return res.status(502).json({
+        success: false,
+        message: 'AI service returned an unexpected response format. Please try again.'
+      });
+    }
 
     // Store feedback
     const feedbackId = Date.now().toString();
