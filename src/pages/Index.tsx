@@ -7,6 +7,28 @@ import AnalysisDisplay from '../components/AnalysisDisplay';
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
+const getStatusFallbackMessage = (status: number, defaultMessage: string) => {
+  if (status === 400) return 'Invalid request. Please check the uploaded file and inputs.';
+  if (status === 413) return 'Payload too large. Try a smaller file or shorter job description.';
+  if (status === 503) return 'Analysis service is temporarily unavailable. Please try again shortly.';
+  return defaultMessage;
+};
+
+const readApiErrorMessage = async (response: Response, defaultMessage: string) => {
+  const fallback = getStatusFallbackMessage(response.status, defaultMessage);
+
+  try {
+    const data = await response.json();
+    if (typeof data?.message === 'string' && data.message.trim().length > 0) {
+      return data.message;
+    }
+  } catch (error) {
+    // Fall back to a status-based message when body is not JSON.
+  }
+
+  return fallback;
+};
+
 const mockAnalysis = {
   score: 88,
   summary: "Your resume demonstrates strong professional experience with quantifiable achievements, but could benefit from some structural improvements and ATS optimization.",
@@ -71,6 +93,11 @@ const Index = () => {
         body: formData,
       });
 
+      if (!response.ok) {
+        const message = await readApiErrorMessage(response, 'Failed to analyze resume.');
+        throw new Error(message);
+      }
+
       const data = await response.json();
       if (!data.success) {
         throw new Error(data.message || 'Failed to analyze resume');
@@ -81,7 +108,7 @@ const Index = () => {
       console.error('Error analyzing resume:', error);
       toast({
         title: "Error",
-        description: "Failed to analyze resume. Please try again.",
+        description: error instanceof Error ? error.message : 'Failed to analyze resume. Please try again.',
         variant: "destructive",
       });
     } finally {
@@ -108,7 +135,11 @@ const Index = () => {
       const response = await fetch(`${API_BASE_URL}/feedback/${feedbackId}/download`, {
         method: 'GET',
       });
-      if (!response.ok) throw new Error('Failed to generate PDF');
+      if (!response.ok) {
+        const message = await readApiErrorMessage(response, 'Could not export PDF. Please try again.');
+        throw new Error(message);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -122,7 +153,7 @@ const Index = () => {
       console.error('Export error:', error);
       toast({
         title: 'Export Failed',
-        description: 'Could not export PDF. Please try again.',
+        description: error instanceof Error ? error.message : 'Could not export PDF. Please try again.',
         variant: 'destructive',
       });
     }
