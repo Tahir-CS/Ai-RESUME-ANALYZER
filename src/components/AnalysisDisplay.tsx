@@ -1,21 +1,25 @@
+import { useState } from 'react';
+import { AlertTriangle, CheckCircle2, Copy, Download, RotateCcw, Sparkles, Target } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { FilePlus, FileMinus, Edit } from 'lucide-react';
+import { Badge } from './ui/badge';
 
 interface ScoreGaugeProps {
   score: number;
+  label: string;
+  colorClass: string;
 }
 
-const ScoreGauge = ({ score }: ScoreGaugeProps) => {
+const ScoreGauge = ({ score, label, colorClass }: ScoreGaugeProps) => {
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="relative w-40 h-40">
+    <div className="relative h-40 w-40">
       <svg className="w-full h-full" viewBox="0 0 120 120">
         <circle
-          className="text-border"
+          className="text-border/60"
           strokeWidth="10"
           stroke="currentColor"
           fill="transparent"
@@ -40,13 +44,16 @@ const ScoreGauge = ({ score }: ScoreGaugeProps) => {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-4xl font-bold text-foreground">{score}</span>
-        <span className="text-sm text-muted-foreground">out of 100</span>
+        <span className="chip-mono text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+      </div>
+      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
+        <span className={`chip-mono rounded-full px-3 py-1 text-xs ${colorClass}`}>Score / 100</span>
       </div>
     </div>
   );
 };
 
-interface Analysis {
+export interface Analysis {
   score: number;
   summary: string;
   strengths: string[];
@@ -72,86 +79,145 @@ interface AnalysisDisplayProps {
 }
 
 const AnalysisDisplay = ({ analysis, onReset, onExport }: AnalysisDisplayProps) => {
+  const [copied, setCopied] = useState(false);
   const { score, summary, strengths, weaknesses, improvementSuggestions, bulletPointRewrites, atsAnalysis } = analysis;
 
+  const copySummary = async () => {
+    try {
+      await navigator.clipboard.writeText(summary);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch (error) {
+      setCopied(false);
+    }
+  };
+
   return (
-    <Card className="w-full animate-fade-in border-primary/20">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-display">Your Resume Analysis</CardTitle>
-        <p className="text-muted-foreground mt-2">{summary}</p>
+    <Card className="glass-card w-full animate-fade-in overflow-hidden border border-border/70 shadow-xl">
+      <CardHeader className="bg-gradient-to-r from-primary/10 via-transparent to-accent/10">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="chip-mono border-primary/30 bg-primary/10 text-primary">AI Report</Badge>
+          <Badge variant="outline" className="chip-mono border-accent/30 bg-accent/10 text-accent">ATS Optimized</Badge>
+        </div>
+        <CardTitle className="text-2xl font-display md:text-3xl">Resume Intelligence Report</CardTitle>
+        <p className="mt-2 text-muted-foreground">{summary}</p>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Button variant="outline" onClick={copySummary} className="border-primary/40 bg-primary/5 text-primary hover:bg-primary/10">
+            <Copy className="mr-2 h-4 w-4" />
+            {copied ? 'Summary Copied' : 'Copy Summary'}
+          </Button>
+          <Button onClick={onExport} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+          <Button variant="outline" onClick={onReset}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Analyze Another
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-8">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="flex flex-col items-center">
-            <h3 className="text-lg font-semibold mb-4">Resume Score</h3>
-            <ScoreGauge score={score} />
+      <CardContent className="space-y-9 pt-6">
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="flex flex-col items-center rounded-2xl border border-border/60 bg-background/60 p-5">
+            <h3 className="mb-4 text-lg font-semibold">Resume Score</h3>
+            <ScoreGauge score={score} label="Resume" colorClass="bg-primary/12 text-primary" />
           </div>
-          <div className="flex flex-col items-center">
-            <h3 className="text-lg font-semibold mb-4">ATS Score</h3>
-            <ScoreGauge score={atsAnalysis.score} />
+          <div className="flex flex-col items-center rounded-2xl border border-border/60 bg-background/60 p-5">
+            <h3 className="mb-4 text-lg font-semibold">ATS Score</h3>
+            <ScoreGauge score={atsAnalysis.score} label="ATS" colorClass="bg-accent/12 text-accent" />
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <h3 className="font-semibold text-lg flex items-center gap-2 text-green-400">
-              <FilePlus className="h-5 w-5" />
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/65 p-5">
+            <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-emerald-700">
+              <CheckCircle2 className="h-5 w-5" />
               Strengths
             </h3>
-            <ul className="space-y-2 list-inside text-muted-foreground">
-              {strengths.map((item, index) => <li key={index}>{item}</li>)}
+            <ul className="space-y-2 text-sm text-emerald-900">
+              {strengths.map((item, index) => <li key={index} className="list-disc pl-1 marker:text-emerald-600">{item}</li>)}
             </ul>
           </div>
-          <div className="space-y-3">
-            <h3 className="font-semibold text-lg flex items-center gap-2 text-yellow-400">
-              <FileMinus className="h-5 w-5" />
+          <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-5">
+            <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-amber-700">
+              <AlertTriangle className="h-5 w-5" />
               Areas for Improvement
             </h3>
-            <ul className="space-y-2 list-inside text-muted-foreground">
-              {weaknesses.map((item, index) => <li key={index}>{item}</li>)}
+            <ul className="space-y-2 text-sm text-amber-900">
+              {weaknesses.map((item, index) => <li key={index} className="list-disc pl-1 marker:text-amber-600">{item}</li>)}
             </ul>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <h3 className="font-semibold text-lg flex items-center gap-2">
-            <Edit className="h-5 w-5" />
+        <div className="rounded-2xl border border-border/70 bg-background/70 p-5">
+          <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+            <Sparkles className="h-5 w-5 text-primary" />
             Suggested Improvements
           </h3>
-          <ul className="space-y-2 list-inside text-muted-foreground">
-            {improvementSuggestions.map((item, index) => <li key={index}>{item}</li>)}
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            {improvementSuggestions.map((item, index) => <li key={index} className="list-disc pl-1 marker:text-primary">{item}</li>)}
           </ul>
         </div>
 
-        {bulletPointRewrites.length > 0 && (
+        {bulletPointRewrites.length > 0 ? (
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Bullet Point Improvements</h3>
-            <div className="space-y-6">
+            <h3 className="text-lg font-semibold">Bullet Point Upgrades</h3>
+            <div className="space-y-4">
               {bulletPointRewrites.map((rewrite, index) => (
-                <div key={index} className="bg-secondary/20 p-4 rounded-lg space-y-2">
-                  <p className="text-muted-foreground"><strong>Before:</strong> {rewrite.before}</p>
-                  <p className="text-primary"><strong>After:</strong> {rewrite.after}</p>
-                  <p className="text-sm text-muted-foreground"><strong>Why:</strong> {rewrite.explanation}</p>
+                <div key={index} className="rounded-2xl border border-border/70 bg-secondary/45 p-4">
+                  <p className="mb-2 text-sm text-muted-foreground"><strong>Before:</strong> {rewrite.before}</p>
+                  <p className="mb-2 text-sm text-primary"><strong>After:</strong> {rewrite.after}</p>
+                  <p className="text-xs text-muted-foreground"><strong>Why:</strong> {rewrite.explanation}</p>
                 </div>
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
-        {atsAnalysis.issues.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="font-semibold text-lg">ATS Issues</h3>
-            <ul className="space-y-2 list-inside text-muted-foreground">
-              {atsAnalysis.issues.map((issue, index) => <li key={index}>{issue}</li>)}
-            </ul>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="rounded-2xl border border-border/70 bg-background/70 p-5">
+            <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+              <Target className="h-5 w-5 text-accent" />
+              Missing Keywords
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {atsAnalysis.missingKeywords.length > 0 ? (
+                atsAnalysis.missingKeywords.map((keyword, index) => (
+                  <Badge key={index} variant="outline" className="border-accent/35 bg-accent/10 text-accent">
+                    {keyword}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No missing keywords detected for this analysis.</p>
+              )}
+            </div>
           </div>
-        )}
 
-        <div className="border-t border-border pt-6 space-y-4">
-             <h3 className="font-semibold text-lg text-center">Ready to improve?</h3>
-             <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Button onClick={onExport}>Export Improved Version <Edit className="ml-2 h-4 w-4" /></Button>
-                <Button variant="outline" onClick={onReset}>Analyze Another</Button>
+          <div className="rounded-2xl border border-border/70 bg-background/70 p-5">
+            <h3 className="mb-3 text-lg font-semibold">ATS Warnings</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              {atsAnalysis.issues.length > 0 ? atsAnalysis.issues.map((issue, index) => (
+                <li key={index} className="list-disc pl-1 marker:text-accent">{issue}</li>
+              )) : <li className="text-muted-foreground">No major ATS issues were flagged.</li>}
+            </ul>
+            {atsAnalysis.formatWarnings.length > 0 ? (
+              <div className="mt-4 rounded-xl bg-background/80 p-3">
+                <p className="chip-mono mb-2 text-xs uppercase text-muted-foreground">Format Notes</p>
+                <ul className="space-y-1 text-xs text-muted-foreground">
+                  {atsAnalysis.formatWarnings.map((warning, index) => (
+                    <li key={index} className="list-disc pl-1 marker:text-primary">{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="border-t border-border/70 pt-5">
+             <div className="flex flex-col justify-center gap-3 sm:flex-row">
+                <Button onClick={onExport}><Download className="mr-2 h-4 w-4" />Export Improved Version</Button>
+                <Button variant="outline" onClick={onReset}><RotateCcw className="mr-2 h-4 w-4" />Analyze Another</Button>
             </div>
         </div>
       </CardContent>
