@@ -5,18 +5,28 @@ import { generatePDFFeedback } from '../utils/pdfGenerator.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
-console.log('Gemini API Key:', process.env.GEMINI_API_KEY); // Debug print
+const geminiApiKey = process.env.GEMINI_API_KEY;
+if (!geminiApiKey) {
+  console.warn('GEMINI_API_KEY is not set. Resume analysis is unavailable.');
+}
 
 // Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
 
 // Use a free, widely available model (gemini-1.5-flash is typically free and fast)
-const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash" });
+const model = genAI ? genAI.getGenerativeModel({ model: 'models/gemini-1.5-flash' }) : null;
 // In-memory storage for feedback (replace with a database in production)
 const feedbackStore = new Map();
 
 export const analyzeResume = async (req, res) => {
   try {
+    if (!model) {
+      return res.status(503).json({
+        success: false,
+        message: 'Resume analysis service is temporarily unavailable.'
+      });
+    }
+
     const file = req.file;
     const jobDescription = req.body.jobDescription;
 
