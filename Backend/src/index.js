@@ -41,6 +41,34 @@ app.use('/api', resumeRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({
+      success: false,
+      message: 'Uploaded file is too large. Maximum file size is 5MB.'
+    });
+  }
+
+  if (err.code === 'LIMIT_FIELD_VALUE') {
+    return res.status(413).json({
+      success: false,
+      message: 'A form field value is too large.'
+    });
+  }
+
+  if (err.code === 'LIMIT_FIELD_COUNT' || err.code === 'LIMIT_PART_COUNT') {
+    return res.status(413).json({
+      success: false,
+      message: 'Too many form fields were submitted.'
+    });
+  }
+
+  if (err.message === 'Invalid file type. Only PDF and DOCX files are allowed.') {
+    return res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+
   console.error(err.stack);
   res.status(500).json({
     success: false,
